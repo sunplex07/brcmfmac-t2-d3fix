@@ -1,0 +1,43 @@
+brcmfmac D3 suspend/resume fix for Apple T2 Macs
+=================================================
+
+Patched pcie.c for brcmfmac (Linux 6.18.5) targeting BCM4364/BCM4377
+on Apple T2 MacBooks (MacBookPro15,x / 16,x).
+
+What it does
+------------
+- Deep sleep state machine tracking for D3 entry/exit
+- Hot resume with D0_INFORM + firmware health check (BRCMF_C_UP)
+- Cold resume fallback: full remove + reprobe when firmware is dead
+- TCM validation before and after resume to detect firmware crashes
+- Post-resume settle delay for firmware re-initialization
+- Verbose suspend/resume logging via pr_info
+
+Module parameters
+-----------------
+  force_cold_resume   Force cold recovery on every resume (bool, default 0)
+
+Build
+-----
+  cp pcie.c <kernel-src>/drivers/net/wireless/broadcom/brcm80211/brcmfmac/pcie.c
+  KDIR=/usr/lib/modules/$(uname -r)/build
+  make -C $KDIR M=<kernel-src>/drivers/net/wireless/broadcom/brcm80211 modules
+
+Install
+-------
+  sudo cp brcmfmac/brcmfmac.ko /usr/lib/modules/$(uname -r)/updates/
+  sudo depmod -a
+  sudo modprobe -r brcmfmac && sudo modprobe brcmfmac
+
+Tested on
+---------
+  MacBookPro16,1 — BCM4364/4 (b3), PCI 14e4:4464
+  Kernel 6.18.5-arch1 (Arch Linux T2)
+
+Should also work
+----------------
+  BCM4377-based T2 Macs (not tested)
+
+Base kernel
+-----------
+  https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git v6.18.5
